@@ -1,14 +1,19 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
-	"github.com/gin-gonic/gin"
+
 	"github.com/Andrew-Ayman123/GoProject/handler"
-	swaggerFiles "github.com/swaggo/files"
-	ginSwagger "github.com/swaggo/gin-swagger"
-	_ "github.com/Andrew-Ayman123/GoProject/docs" // Import the generated docs package
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+
+	httpSwagger "github.com/swaggo/http-swagger"
+	_ "github.com/swaggo/files"
+
+	_ "github.com/Andrew-Ayman123/GoProject/docs" // Import the generated docs
+
+	"github.com/Andrew-Ayman123/GoProject/utils/env"
 )
 
 // @title Go Project API
@@ -27,31 +32,40 @@ import (
 // @in header
 // @name Authorization
 // @description API Key for authorization
+
 func main() {
-	r := gin.Default()
-	
-	// API v1 group
-	v1 := r.Group("/api/v1")
+	env.Init() // Initialize environment variables
 
-	userAuth := v1.Group("/user")
-	{
-		// Add your login route here
-		userAuth.POST("/login", ginHandlerWrapper(handler.HandleUserLogIn))
-		
-	}
-	
-	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	r := chi.NewRouter()
 
-	fmt.Println("Starting server on :8080")
-	fmt.Println("Swagger UI available at: http://localhost:8080/api/v1/swagger/index.html")
+	// A good base middleware stack
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(middleware.Logger)
+	r.Use(middleware.Recoverer)
 	
-	// Start the server
-	if err := r.Run(":8080"); err != nil {
+
+	// Define API routes under /api/v1
+	r.Route("/api/v1", func(v1 chi.Router) {
+
+		// Swagger endpoint
+		v1.Get("/swagger/*", httpSwagger.Handler(
+			httpSwagger.URL("/api/v1/swagger/doc.json"),
+		))
+
+		// Group /user routes
+		v1.Route("/user", func(user chi.Router) {
+			user.Post("/login", handler.HandleUserLogIn)
+		})
+	})
+
+	addr:= env.GetEnv("ADDR", ":8080")
+	
+	log.Default().Println("Starting server on localhost", addr)
+	log.Default().Printf("Swagger UI available at: http://localhost%s/api/v1/swagger/index.html\n", addr)
+
+	err := http.ListenAndServe(addr, r)
+	if err != nil {
 		log.Fatal("Failed to start server: ", err)
 	}
-}
-
-// Wrapper function to convert http.HandlerFunc to gin.HandlerFunc
-func ginHandlerWrapper(h http.HandlerFunc) gin.HandlerFunc {
-	return gin.WrapH(http.HandlerFunc(h))
 }
