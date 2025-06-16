@@ -23,6 +23,35 @@ type UserRepository interface {
 	GetUserProjectsByID(userID uuid.UUID) ([]models.UserProject, error)
 	GetUserSkillsByID(userID uuid.UUID) ([]models.Skill, error)
 	GetSkillsByName(name string) ([]models.Skill, error)
+
+	// Phone Numbers
+	CreatePhoneNumber(userID uuid.UUID, req dto.CreatePhoneNumberRequest) (*models.UserPhoneNumber, error)
+	UpdatePhoneNumber(userID, phoneID uuid.UUID, req dto.CreatePhoneNumberRequest) (*models.UserPhoneNumber, error)
+	DeletePhoneNumber(userID, phoneID uuid.UUID) error
+
+	// Education
+	CreateEducation(userID uuid.UUID, req dto.CreateEducationRequest) (*models.UserEducation, error)
+	UpdateEducation(userID, educationID uuid.UUID, req dto.CreateEducationRequest) (*models.UserEducation, error)
+	DeleteEducation(userID, educationID uuid.UUID) error
+
+	// Experience
+	CreateExperience(userID uuid.UUID, req dto.CreateExperienceRequest) (*models.UserExperience, error)
+	UpdateExperience(userID, experienceID uuid.UUID, req dto.CreateExperienceRequest) (*models.UserExperience, error)
+	DeleteExperience(userID, experienceID uuid.UUID) error
+
+	// Certifications
+	CreateCertification(userID uuid.UUID, req dto.CreateCertificationRequest) (*models.UserCertification, error)
+	UpdateCertification(userID, certificationID uuid.UUID, req dto.CreateCertificationRequest) (*models.UserCertification, error)
+	DeleteCertification(userID, certificationID uuid.UUID) error
+
+	// Projects
+	CreateProject(userID uuid.UUID, req dto.CreateProjectRequest) (*models.UserProject, error)
+	UpdateProject(userID, projectID uuid.UUID, req dto.CreateProjectRequest) (*models.UserProject, error)
+	DeleteProject(userID, projectID uuid.UUID) error
+
+	// Skills
+	AddUserSkills(userID uuid.UUID, skillIDs []int) error
+	RemoveUserSkill(userID uuid.UUID, skillID int) error
 }
 
 type userRepository struct {
@@ -446,4 +475,383 @@ func (r *userRepository) getMedia(fieldName string, entityID uuid.UUID) ([]model
 	}
 
 	return media, rows.Err()
+}
+
+func (r *userRepository) CreatePhoneNumber(userID uuid.UUID, req dto.CreatePhoneNumberRequest) (*models.UserPhoneNumber, error) {
+	query := `
+  INSERT INTO user_phone_numbers (user_id, phone_number, phone_type, is_primary)
+  VALUES ($1, $2, $3, $4)
+  RETURNING id, user_id, phone_number, phone_type, is_primary, created_at, updated_at
+ `
+	var phone models.UserPhoneNumber
+	err := r.db.QueryRow(query, userID, req.PhoneNumber, req.PhoneType, req.IsPrimary).Scan(
+		&phone.ID, &phone.UserID, &phone.PhoneNumber, &phone.PhoneType,
+		&phone.IsPrimary, &phone.CreatedAt, &phone.UpdatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create phone number: %w", err)
+	}
+	return &phone, nil
+}
+
+func (r *userRepository) UpdatePhoneNumber(userID, phoneID uuid.UUID, req dto.CreatePhoneNumberRequest) (*models.UserPhoneNumber, error) {
+	query := `
+  UPDATE user_phone_numbers
+  SET phone_number = $1, phone_type = $2, is_primary = $3, updated_at = NOW()
+  WHERE user_id = $4 AND id = $5
+  RETURNING id, user_id, phone_number, phone_type, is_primary, created_at, updated_at
+ `
+	var phone models.UserPhoneNumber
+	err := r.db.QueryRow(query, req.PhoneNumber, req.PhoneType, req.IsPrimary, userID, phoneID).Scan(
+		&phone.ID, &phone.UserID, &phone.PhoneNumber, &phone.PhoneType,
+		&phone.IsPrimary, &phone.CreatedAt, &phone.UpdatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update phone number: %w", err)
+	}
+	return &phone, nil
+}
+func (r *userRepository) DeletePhoneNumber(userID, phoneID uuid.UUID) error {
+	query := `
+  DELETE FROM user_phone_numbers
+  WHERE user_id = $1 AND id = $2
+ `
+	result, err := r.db.Exec(query, userID, phoneID)
+	if err != nil {
+		return fmt.Errorf("failed to delete phone number: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+func (r *userRepository) CreateEducation(userID uuid.UUID, req dto.CreateEducationRequest) (*models.UserEducation, error) {
+	query := `
+  INSERT INTO user_education (user_id, institution_name, degree, field_of_study,
+	  start_date, end_date, is_current, grade_gpa, description)
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+  RETURNING id, user_id, institution_name, degree, field_of_study,
+	  start_date, end_date, is_current, grade_gpa, description,
+	  created_at, updated_at
+ `
+	var edu models.UserEducation
+	err := r.db.QueryRow(query,
+		userID, req.InstitutionName, req.Degree, req.FieldOfStudy,
+		req.StartDate, req.EndDate, req.IsCurrent, req.GradeGPA,
+		req.Description).Scan(
+		&edu.ID, &edu.UserID, &edu.InstitutionName, &edu.Degree,
+		&edu.FieldOfStudy, &edu.StartDate, &edu.EndDate,
+		&edu.IsCurrent, &edu.GradeGPA, &edu.Description,
+		&edu.CreatedAt, &edu.UpdatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create education: %w", err)
+	}
+	return &edu, nil
+}
+func (r *userRepository) UpdateEducation(userID, educationID uuid.UUID, req dto.CreateEducationRequest) (*models.UserEducation, error) {
+	query := `
+  UPDATE user_education
+  SET institution_name = $1, degree = $2, field_of_study = $3,
+	  start_date = $4, end_date = $5, is_current = $6,
+	  grade_gpa = $7, description = $8, updated_at = NOW()
+  WHERE user_id = $9 AND id = $10
+  RETURNING id, user_id, institution_name, degree, field_of_study,
+	  start_date, end_date, is_current, grade_gpa, description,
+	  created_at, updated_at
+ `
+	var edu models.UserEducation
+	err := r.db.QueryRow(query,
+		req.InstitutionName, req.Degree, req.FieldOfStudy,
+		req.StartDate, req.EndDate, req.IsCurrent, req.GradeGPA,
+		req.Description, userID, educationID).Scan(
+		&edu.ID, &edu.UserID, &edu.InstitutionName, &edu.Degree,
+		&edu.FieldOfStudy, &edu.StartDate, &edu.EndDate,
+		&edu.IsCurrent, &edu.GradeGPA, &edu.Description,
+		&edu.CreatedAt, &edu.UpdatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update education: %w", err)
+	}
+	return &edu, nil
+}
+func (r *userRepository) DeleteEducation(userID, educationID uuid.UUID) error {
+	query := `
+  DELETE FROM user_education
+  WHERE user_id = $1 AND id = $2
+ `
+	result, err := r.db.Exec(query, userID, educationID)
+	if err != nil {
+		return fmt.Errorf("failed to delete education: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+func (r *userRepository) CreateExperience(userID uuid.UUID, req dto.CreateExperienceRequest) (*models.UserExperience, error) {
+	query := `
+  INSERT INTO user_experience (user_id, company_name, position_title, employment_type,
+   start_date, end_date, is_current, location, description)
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+  RETURNING id, user_id, company_name, position_title, employment_type,
+   start_date, end_date, is_current, location, description,
+   created_at, updated_at
+ `
+	var exp models.UserExperience
+	err := r.db.QueryRow(query,
+		userID, req.CompanyName, req.PositionTitle, req.EmploymentType,
+		req.StartDate, req.EndDate, req.IsCurrent, req.Location,
+		req.Description).Scan(
+		&exp.ID, &exp.UserID, &exp.CompanyName, &exp.PositionTitle,
+		&exp.EmploymentType, &exp.StartDate, &exp.EndDate,
+		&exp.IsCurrent, &exp.Location, &exp.Description,
+		&exp.CreatedAt, &exp.UpdatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create experience: %w", err)
+	}
+	return &exp, nil
+}
+func (r *userRepository) UpdateExperience(userID, experienceID uuid.UUID, req dto.CreateExperienceRequest) (*models.UserExperience, error) {
+	query := `
+  UPDATE user_experience
+  SET company_name = $1, position_title = $2, employment_type = $3,
+   start_date = $4, end_date = $5, is_current = $6,
+   location = $7, description = $8, updated_at = NOW()
+  WHERE user_id = $9 AND id = $10
+  RETURNING id, user_id, company_name, position_title, employment_type,
+   start_date, end_date, is_current, location, description,
+   created_at, updated_at
+ `
+	var exp models.UserExperience
+	err := r.db.QueryRow(query,
+		req.CompanyName, req.PositionTitle, req.EmploymentType,
+		req.StartDate, req.EndDate, req.IsCurrent, req.Location,
+		req.Description, userID, experienceID).Scan(
+		&exp.ID, &exp.UserID, &exp.CompanyName, &exp.PositionTitle,
+		&exp.EmploymentType, &exp.StartDate, &exp.EndDate,
+		&exp.IsCurrent, &exp.Location, &exp.Description,
+		&exp.CreatedAt, &exp.UpdatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update experience: %w", err)
+	}
+	return &exp, nil
+}
+func (r *userRepository) DeleteExperience(userID, experienceID uuid.UUID) error {
+	query := `
+  DELETE FROM user_experience
+  WHERE user_id = $1 AND id = $2
+ `
+	result, err := r.db.Exec(query, userID, experienceID)
+	if err != nil {
+		return fmt.Errorf("failed to delete experience: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+func (r *userRepository) CreateCertification(userID uuid.UUID, req dto.CreateCertificationRequest) (*models.UserCertification, error) {
+	query := `
+  INSERT INTO user_certifications (user_id, certification_name, issuing_organization,
+   issue_date, expiration_date, credential_id, credential_url, description)
+  VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+  RETURNING id, user_id, certification_name, issuing_organization,
+   issue_date, expiration_date, credential_id, credential_url,
+   description, created_at, updated_at
+ `
+	var cert models.UserCertification
+	err := r.db.QueryRow(query,
+		userID, req.CertificationName, req.IssuingOrganization,
+		req.IssueDate, req.ExpirationDate, req.CredentialID,
+		req.CredentialURL, req.Description).Scan(
+		&cert.ID, &cert.UserID, &cert.CertificationName,
+		&cert.IssuingOrganization, &cert.IssueDate,
+		&cert.ExpirationDate, &cert.CredentialID,
+		&cert.CredentialURL, &cert.Description,
+		&cert.CreatedAt, &cert.UpdatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create certification: %w", err)
+	}
+	return &cert, nil
+}
+func (r *userRepository) UpdateCertification(userID, certificationID uuid.UUID, req dto.CreateCertificationRequest) (*models.UserCertification, error) {
+	query := `
+  UPDATE user_certifications
+  SET certification_name = $1, issuing_organization = $2,
+   issue_date = $3, expiration_date = $4, credential_id = $5,
+   credential_url = $6, description = $7, updated_at = NOW()
+  WHERE user_id = $8 AND id = $9
+  RETURNING id, user_id, certification_name, issuing_organization,
+   issue_date, expiration_date, credential_id, credential_url,
+   description, created_at, updated_at
+ `
+	var cert models.UserCertification
+	err := r.db.QueryRow(query,
+		req.CertificationName, req.IssuingOrganization,
+		req.IssueDate, req.ExpirationDate, req.CredentialID,
+		req.CredentialURL, req.Description, userID, certificationID).Scan(
+		&cert.ID, &cert.UserID, &cert.CertificationName,
+		&cert.IssuingOrganization, &cert.IssueDate,
+		&cert.ExpirationDate, &cert.CredentialID,
+		&cert.CredentialURL, &cert.Description,
+		&cert.CreatedAt, &cert.UpdatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update certification: %w", err)
+	}
+	return &cert, nil
+}
+func (r *userRepository) DeleteCertification(userID, certificationID uuid.UUID) error {
+	query := `
+  DELETE FROM user_certifications
+  WHERE user_id = $1 AND id = $2
+ `
+	result, err := r.db.Exec(query, userID, certificationID)
+	if err != nil {
+		return fmt.Errorf("failed to delete certification: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+func (r *userRepository) CreateProject(userID uuid.UUID, req dto.CreateProjectRequest) (*models.UserProject, error) {
+	query := `
+  INSERT INTO user_projects (user_id, project_name, description, start_date,
+   end_date, is_ongoing, project_url)
+  VALUES ($1, $2, $3, $4, $5, $6, $7)
+  RETURNING id, user_id, project_name, description,
+   start_date, end_date, is_ongoing, project_url,
+   created_at, updated_at
+ `
+	var project models.UserProject
+	err := r.db.QueryRow(query,
+		userID, req.ProjectName, req.Description,
+		req.StartDate, req.EndDate, req.IsOngoing,
+		req.ProjectURL).Scan(
+		&project.ID, &project.UserID, &project.ProjectName,
+		&project.Description, &project.StartDate,
+		&project.EndDate, &project.IsOngoing,
+		&project.ProjectURL, &project.CreatedAt,
+		&project.UpdatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create project: %w", err)
+	}
+	return &project, nil
+}
+func (r *userRepository) UpdateProject(userID, projectID uuid.UUID, req dto.CreateProjectRequest) (*models.UserProject, error) {
+	query := `
+  UPDATE user_projects
+  SET project_name = $1, description = $2, start_date = $3,
+   end_date = $4, is_ongoing = $5, project_url = $6,
+   updated_at = NOW()
+  WHERE user_id = $7 AND id = $8
+  RETURNING id, user_id, project_name, description,
+   start_date, end_date, is_ongoing, project_url,
+   created_at, updated_at
+ `
+	var project models.UserProject
+	err := r.db.QueryRow(query,
+		req.ProjectName, req.Description, req.StartDate,
+		req.EndDate, req.IsOngoing, req.ProjectURL,
+		userID, projectID).Scan(
+		&project.ID, &project.UserID, &project.ProjectName,
+		&project.Description, &project.StartDate,
+		&project.EndDate, &project.IsOngoing,
+		&project.ProjectURL, &project.CreatedAt,
+		&project.UpdatedAt,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update project: %w", err)
+	}
+	return &project, nil
+}
+func (r *userRepository) DeleteProject(userID, projectID uuid.UUID) error {
+	query := `
+  DELETE FROM user_projects
+  WHERE user_id = $1 AND id = $2
+ `
+	result, err := r.db.Exec(query, userID, projectID)
+	if err != nil {
+		return fmt.Errorf("failed to delete project: %w", err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
+}
+func (r *userRepository) AddUserSkills(userID uuid.UUID, skillIDs []int) error {
+	query := `
+  INSERT INTO user_skills (user_id, skill_id)
+  VALUES ($1, $2)
+  ON CONFLICT (user_id, skill_id) DO NOTHING
+ `
+	for _, skillID := range skillIDs {
+		_, err := r.db.Exec(query, userID, skillID)
+		if err != nil {
+			return fmt.Errorf("failed to add skill %d for user %s: %w", skillID, userID, err)
+		}
+	}
+	return nil
+}
+func (r *userRepository) RemoveUserSkill(userID uuid.UUID, skillID int) error {
+	query := `
+  DELETE FROM user_skills
+  WHERE user_id = $1 AND skill_id = $2
+ `
+	result, err := r.db.Exec(query, userID, skillID)
+	if err != nil {
+		return fmt.Errorf("failed to remove skill %d for user %s: %w", skillID, userID, err)
+	}
+
+	rowsAffected, err := result.RowsAffected()
+	if err != nil {
+		return fmt.Errorf("failed to get rows affected: %w", err)
+	}
+
+	if rowsAffected == 0 {
+		return sql.ErrNoRows
+	}
+
+	return nil
 }

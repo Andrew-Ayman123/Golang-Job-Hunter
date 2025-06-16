@@ -51,15 +51,48 @@ func setupUserRoutes(router chi.Router, userHandler handlers.UserHandler, jwtSer
 	router.Route("/user", func(user chi.Router) {
 
 		// Public routes (no middleware)
-		user.Post("/login", userHandler.HandleUserLogIn) // Legacy
+		user.Post("/login", userHandler.HandleUserLogIn) 
 
 		// Protected routes (with middleware)
 		user.Group(func(protected chi.Router) {
 			protected.Use(middleware.JWTAuth(&jwtService))
-			protected.Get("/profile", userHandler.HandleGetProfile)
-			// protected.Put("/profile", userHandler.HandleUpdateProfile)
+
+			protected.Route("/profile", func(profile chi.Router) {
+				profile.Get("/", userHandler.HandleGetProfile) // Get current user's profile
+				// User Phone Numbers
+				profile.Post("/phone-numbers", userHandler.HandleCreatePhoneNumber)             // Add phone number
+				profile.Put("/phone-numbers/{phoneID}", userHandler.HandleUpdatePhoneNumber)    // Update phone number
+				profile.Delete("/phone-numbers/{phoneID}", userHandler.HandleDeletePhoneNumber) // Delete phone number
+
+				// User Education
+				profile.Post("/education", userHandler.HandleCreateEducation)                 // Add education
+				profile.Put("/education/{educationID}", userHandler.HandleUpdateEducation)    // Update education
+				profile.Delete("/education/{educationID}", userHandler.HandleDeleteEducation) // Delete education
+
+				// User Experience
+				profile.Post("/experience", userHandler.HandleCreateExperience)                  // Add experience
+				profile.Put("/experience/{experienceID}", userHandler.HandleUpdateExperience)    // Update experience
+				profile.Delete("/experience/{experienceID}", userHandler.HandleDeleteExperience) // Delete experience
+
+				// User Certifications
+				profile.Post("/certifications", userHandler.HandleCreateCertification)                     // Add certification
+				profile.Put("/certifications/{certificationID}", userHandler.HandleUpdateCertification)    // Update certification
+				profile.Delete("/certifications/{certificationID}", userHandler.HandleDeleteCertification) // Delete certification
+
+				// User Projects
+				profile.Post("/projects", userHandler.HandleCreateProject)               // Add project
+				profile.Put("/projects/{projectID}", userHandler.HandleUpdateProject)    // Update project
+				profile.Delete("/projects/{projectID}", userHandler.HandleDeleteProject) // Delete project
+
+				// User Skills
+				profile.Post("/skills", userHandler.HandleAddUserSkills)               // Add skill
+				profile.Delete("/skills/{skillID}", userHandler.HandleRemoveUserSkill) // Delete skill
+			})
 		})
 	})
+
+	// Public routes (no middleware)
+	router.Get("skills", userHandler.HandleSearchSkills) // Get all skills
 
 	// Applicant specific routes
 	setupApplicantRoutes(router, userHandler, jwtService)
@@ -97,7 +130,7 @@ func setupAdminRoutes(router chi.Router, userHandler handlers.UserHandler, jwtSe
 		admin.Group(func(protected chi.Router) {
 			protected.Use(middleware.JWTAuth(&jwtService))
 			protected.Use(middleware.RequireRole("admin"))
-			
+
 			// Only admins can create admin and recruiter accounts
 			protected.Post("/create-admin", userHandler.HandleCreateAdmin)
 			protected.Post("/create-recruiter", userHandler.HandleCreateRecruiter)
