@@ -14,7 +14,7 @@ import (
 // @Tags User
 // @Security BearerAuth
 // @Produce json
-// @Success 200 {object} models.User
+// @Success 200 {object} models.UserProfile
 // @Failure 401 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /user/profile [get]
@@ -25,9 +25,10 @@ func (h *UserHandler) HandleGetProfile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.userRepo.GetUserByID(claims.UserID)
+	user, err := h.userRepo.GetUserProfileByID(claims.UserID)
 	if err != nil {
-		h.writeErrorResponse(w, "User not found", http.StatusNotFound)
+		// write error
+		h.writeErrorResponse(w, "Failed to get user profile " + err.Error(), http.StatusInternalServerError)
 		return
 	}
 

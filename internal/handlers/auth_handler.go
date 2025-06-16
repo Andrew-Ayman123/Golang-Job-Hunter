@@ -54,7 +54,7 @@ func (h *UserHandler) HandleApplicantSignUp(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	user, err := h.userRepo.CreateApplicant(req)
+	user, err := h.userRepo.CreateUser(req, "applicant")
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key") {
 			h.writeErrorResponse(w, "Email already exists", http.StatusConflict)

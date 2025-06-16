@@ -1,3 +1,6 @@
+# Stop script on any error
+$ErrorActionPreference = "Stop"
+
 # 1. Load environment variables from .env
 Get-Content .env | ForEach-Object {
     if ($_ -match '^\s*([^#][^=]+)\s*=\s*(.+)$') {

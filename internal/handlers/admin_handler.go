@@ -37,7 +37,7 @@ func (h *UserHandler) HandleCreateAdmin(w http.ResponseWriter, r *http.Request) 
         return
     }
 
-	user, err := h.adminRepo.CreateAdmin(req)
+	admin, err := h.adminRepo.CreateAdmin(req)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key") {
 			h.writeErrorResponse(w, "Email already exists", http.StatusConflict)
@@ -49,7 +49,7 @@ func (h *UserHandler) HandleCreateAdmin(w http.ResponseWriter, r *http.Request) 
 
 	response := dto.CreateUserResponse{
 		Message: "Admin account created successfully",
-		User:    *user,
+		User:    admin.User,
 	}
 
 	h.writeJSONResponse(w, response, http.StatusCreated)
@@ -83,7 +83,7 @@ func (h *UserHandler) HandleCreateRecruiter(w http.ResponseWriter, r *http.Reque
         return
     }
 
-	user, err := h.adminRepo.CreateRecruiter(req)
+	recruiter, err := h.adminRepo.CreateRecruiter(req)
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key") {
 			h.writeErrorResponse(w, "Email already exists", http.StatusConflict)
@@ -95,7 +95,7 @@ func (h *UserHandler) HandleCreateRecruiter(w http.ResponseWriter, r *http.Reque
 
 	response := dto.CreateUserResponse{
 		Message: "Recruiter account created successfully",
-		User:    *user,
+		User:    recruiter.User,
 	}
 
 	h.writeJSONResponse(w, response, http.StatusCreated)

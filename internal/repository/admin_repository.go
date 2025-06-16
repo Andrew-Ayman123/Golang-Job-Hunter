@@ -7,12 +7,11 @@ import (
 
 	"github.com/Andrew-Ayman123/Job-Hunter/internal/dto"
 	"github.com/Andrew-Ayman123/Job-Hunter/internal/models"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type AdminRepository interface {
-	CreateAdmin(req dto.CreateAdminRequest) (*models.User, error)
-	CreateRecruiter(req dto.CreateRecruiterRequest) (*models.User, error)
+	CreateAdmin(req dto.CreateAdminRequest) (*models.Admin, error)
+	CreateRecruiter(req dto.CreateRecruiterRequest) (*models.Recruiter, error)
 	CreateCompany(req dto.CreateCompanyRequest) (*models.Company, error)
 	UpdateCompany(id string, req dto.UpdateCompanyRequest) (*models.Company, error)
 	DeleteCompany(id string) error
@@ -30,13 +29,13 @@ func NewAdminRepository(db *sql.DB, userRepo UserRepository) AdminRepository {
 	}
 }
 
-func (r *adminRepository) CreateAdmin(req dto.CreateAdminRequest) (*models.User, error) {
-	// Hash password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash password: %w", err)
-	}
+func (r *adminRepository) CreateAdmin(req dto.CreateAdminRequest) (*models.Admin, error) {
 
+	user, err := r.userRepo.CreateUser(req.CreateUserRequest, "admin")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create admin user: %w", err)
+	}
+	 
 	// Start transaction
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -44,26 +43,12 @@ func (r *adminRepository) CreateAdmin(req dto.CreateAdminRequest) (*models.User,
 	}
 	defer tx.Rollback()
 
-	// Create user with admin role
-	var user models.User
-	query := `
-		INSERT INTO users (email, password_hash, full_name, role)
-		VALUES ($1, $2, 'admin')
-		RETURNING id, email, password_hash,full_name, role, created_at, updated_at
-	`
-	err = tx.QueryRow(query, req.Email, string(hashedPassword)).Scan(
-		&user.ID, &user.Email, &user.PasswordHash, &user.FullName, &user.Role, &user.CreatedAt, &user.UpdatedAt,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create admin user: %w", err)
-	}
-
-	// Create recruiter profile
-	recruiter := models.Admin{
-		UserID:    user.ID,
+	// Create admin profile
+	admin := models.Admin{
+		User: *user,
 		AdminLevel: req.AdminLevel,
 	}
-	err = r.createAdminTx(tx, recruiter)
+	err = r.createAdminTx(tx, admin)
 	if err != nil {
 		return nil, err
 	}
@@ -72,16 +57,16 @@ func (r *adminRepository) CreateAdmin(req dto.CreateAdminRequest) (*models.User,
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	return &user, nil
+	return &admin, nil
 }
 
-func (r *adminRepository) CreateRecruiter(req dto.CreateRecruiterRequest) (*models.User, error) {
-	// Hash password
-	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
-	if err != nil {
-		return nil, fmt.Errorf("failed to hash password: %w", err)
-	}
+func (r *adminRepository) CreateRecruiter(req dto.CreateRecruiterRequest) (*models.Recruiter, error) {
 
+	user, err := r.userRepo.CreateUser(req.CreateUserRequest, "recruiter")
+	if err != nil {
+		return nil, fmt.Errorf("failed to create admin user: %w", err)
+	}
+	 
 	// Start transaction
 	tx, err := r.db.Begin()
 	if err != nil {
@@ -89,23 +74,9 @@ func (r *adminRepository) CreateRecruiter(req dto.CreateRecruiterRequest) (*mode
 	}
 	defer tx.Rollback()
 
-	// Create user with recruiter role
-	var user models.User
-	query := `
-		INSERT INTO users (email, password_hash, full_name, role)
-		VALUES ($1, $2,$3, 'recruiter')
-		RETURNING id, email, password_hash, full_name, role, created_at, updated_at
-	`
-	err = tx.QueryRow(query, req.Email, string(hashedPassword), req.FullName).Scan(
-		&user.ID, &user.Email, &user.PasswordHash, &user.FullName, &user.Role, &user.CreatedAt, &user.UpdatedAt,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create recruiter user: %w", err)
-	}
-
 	// Create recruiter profile
 	recruiter := models.Recruiter{
-		UserID:    user.ID,
+		User:     *user,
 		CompanyID: req.CompanyID,
 	}
 	err = r.createRecruiterTx(tx, recruiter)
@@ -117,7 +88,7 @@ func (r *adminRepository) CreateRecruiter(req dto.CreateRecruiterRequest) (*mode
 		return nil, fmt.Errorf("failed to commit transaction: %w", err)
 	}
 
-	return &user, nil
+	return &recruiter, nil
 }
 
 func (r *adminRepository) CreateCompany(req dto.CreateCompanyRequest) (*models.Company, error) {
@@ -233,13 +204,12 @@ func (r *adminRepository) DeleteCompany(id string) error {
 	return nil
 }
 
-
 func (r *adminRepository) createRecruiterTx(tx *sql.Tx, recruiter models.Recruiter) error {
 	query := `
 		INSERT INTO recruiters (user_id, company_id)
 		VALUES ($1, $2)
 	`
-	_, err := tx.Exec(query, recruiter.UserID, recruiter.CompanyID)
+	_, err := tx.Exec(query, recruiter.ID, recruiter.CompanyID)
 	return err
 }
 
@@ -248,6 +218,6 @@ func (r *adminRepository) createAdminTx(tx *sql.Tx, admin models.Admin) error {
 		INSERT INTO admins (user_id, admin_level)
 		VALUES ($1, $2)
 	`
-	_, err := tx.Exec(query, admin.UserID, admin.AdminLevel)
+	_, err := tx.Exec(query, admin.ID, admin.AdminLevel)
 	return err
 }
