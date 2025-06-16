@@ -3,6 +3,11 @@ CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     email TEXT NOT NULL UNIQUE,
     password_hash TEXT NOT NULL,
+    full_name TEXT NOT NULL,
+    location TEXT,
+    title TEXT,
+    about_section TEXT,
+    profile_picture TEXT,
     role TEXT NOT NULL CHECK (role IN ('applicant', 'recruiter','admin')),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
@@ -10,24 +15,20 @@ CREATE TABLE users (
 
 CREATE TABLE applicants (
     user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-    full_name TEXT NOT NULL,
-    resume TEXT,
-    experience_years INT,
-    location TEXT
+    resume TEXT
 );
 
 CREATE TABLE companies (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     name TEXT NOT NULL UNIQUE,
-    description TEXT,
+    description TEXT NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
 CREATE TABLE recruiters (
     user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-    company_id UUID REFERENCES companies(id) ON DELETE SET NULL,
-    contact_number TEXT
+    company_id UUID NOT NULL REFERENCES companies(id) ON DELETE SET NULL
 );
 
 CREATE TABLE admins (

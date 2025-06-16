@@ -94,11 +94,14 @@ func setupRecruiterRoutes(router chi.Router, userHandler handlers.UserHandler, j
 }
 func setupAdminRoutes(router chi.Router, userHandler handlers.UserHandler, jwtService services.JWTService) {
 	router.Route("/admin", func(admin chi.Router) {
-
 		admin.Group(func(protected chi.Router) {
 			protected.Use(middleware.JWTAuth(&jwtService))
 			protected.Use(middleware.RequireRole("admin"))
-
+			
+			// Only admins can create admin and recruiter accounts
+			protected.Post("/create-admin", userHandler.HandleCreateAdmin)
+			protected.Post("/create-recruiter", userHandler.HandleCreateRecruiter)
+			protected.Post("/create-company", userHandler.HandleCreateCompany)
 		})
 	})
 }

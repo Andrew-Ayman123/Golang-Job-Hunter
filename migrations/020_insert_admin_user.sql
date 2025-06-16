@@ -1,8 +1,9 @@
 -- +goose Up
-INSERT INTO users (email, password_hash, role)
+INSERT INTO users (email, password_hash,full_name, role)
 VALUES (
     'andrewayman9@gmail.com',
     '$2a$10$S9sO2OMJI0Q.uGrsxx/wRu4q7QEcNP8XcfEBvFYGkrm1fwlykDqfC', -- "12345678"
+    'Andrew Ayman',
     'admin'
 );
 
