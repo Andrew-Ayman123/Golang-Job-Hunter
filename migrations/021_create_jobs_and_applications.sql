@@ -11,7 +11,7 @@ CREATE TABLE jobs (
 
 CREATE TABLE applications (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    applicant_id UUID NOT NULL REFERENCES applicants(user_id) ON DELETE CASCADE,
+    applicant_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     job_id UUID NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
     status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'accepted', 'rejected')),
     applied_at TIMESTAMP WITH TIME ZONE DEFAULT now(),

@@ -101,7 +101,9 @@ func setupAdminRoutes(router chi.Router, userHandler handlers.UserHandler, jwtSe
 			// Only admins can create admin and recruiter accounts
 			protected.Post("/create-admin", userHandler.HandleCreateAdmin)
 			protected.Post("/create-recruiter", userHandler.HandleCreateRecruiter)
-			protected.Post("/create-company", userHandler.HandleCreateCompany)
+			protected.Post("/company", userHandler.HandleCreateCompany)
+			protected.Patch("/company/{companyID}", userHandler.HandleUpdateCompany)
+			protected.Delete("/company/{companyID}", userHandler.HandleDeleteCompany)
 		})
 	})
 }

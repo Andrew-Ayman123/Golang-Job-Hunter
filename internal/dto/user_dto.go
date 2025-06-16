@@ -6,30 +6,33 @@ import (
 	"github.com/google/uuid"
 )
 
-type CreateApplicantRequest struct {
+type CreateUserRequest struct {
 	Email    string  `json:"email" validate:"required,email"`
 	Password string  `json:"password" validate:"required,min=6"`
-	FullName *string `json:"full_name,omitempty"`
+	FullName *string `json:"full_name" validate:"required,min=6"`
 }
 
 type CreateAdminRequest struct {
-	Email    string `json:"email" validate:"required,email"`
-	Password string `json:"password" validate:"required,min=6"`
+	CreateUserRequest
 	AdminLevel int `json:"admin_level" validate:"required,min=1,max=5"`
 }
 
 type CreateRecruiterRequest struct {
-	Email       string `json:"email" validate:"required,email"`
-	Password    string `json:"password" validate:"required,min=6"`
-	CompanyID     *uuid.UUID `json:"company_id" validate:"required"`
+	CreateUserRequest
+	CompanyID *uuid.UUID `json:"company_id" validate:"required"`
 }
 type CreateCompanyRequest struct {
-	Name       string `json:"name" validate:"required"`
-	Description    string `json:"description" validate:"required"`
+	Name        string `json:"name" validate:"required,min=6"`
+	Description string `json:"description" validate:"required,min=6"`
 }
 type CreateCompanyResponse struct {
-	Message string `json:"message"`
+	Message string         `json:"message"`
 	Company models.Company `json:"company"`
+}
+
+type UpdateCompanyRequest struct {
+	Name        *string `json:"name"`
+	Description *string `json:"description"`
 }
 
 type LoginRequest struct {

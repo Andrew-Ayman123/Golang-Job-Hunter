@@ -10,9 +10,6 @@ CREATE TABLE user_projects (
     end_date DATE,
     is_ongoing BOOLEAN DEFAULT false,
     project_url TEXT,
-    repository_url TEXT,
-    technologies_used TEXT[], -- Array of technologies
-    role TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );

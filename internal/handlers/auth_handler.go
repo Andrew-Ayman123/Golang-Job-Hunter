@@ -9,19 +9,21 @@ import (
 	"github.com/Andrew-Ayman123/Job-Hunter/internal/dto"
 	"github.com/Andrew-Ayman123/Job-Hunter/internal/repository"
 	"github.com/Andrew-Ayman123/Job-Hunter/internal/services"
-	"golang.org/x/crypto/bcrypt"
 	"github.com/go-playground/validator/v10"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserHandler struct {
 	userRepo   repository.UserRepository
+	adminRepo  repository.AdminRepository
 	jwtService *services.JWTService
-	validator    *validator.Validate
+	validator  *validator.Validate
 }
 
-func NewUserHandler(userRepo repository.UserRepository, jwtService *services.JWTService) *UserHandler {
+func NewUserHandler(userRepo repository.UserRepository, adminRepo repository.AdminRepository, jwtService *services.JWTService) *UserHandler {
 	return &UserHandler{
 		userRepo:   userRepo,
+		adminRepo:  adminRepo,
 		jwtService: jwtService,
 		validator:  validator.New(),
 	}
@@ -33,14 +35,14 @@ func NewUserHandler(userRepo repository.UserRepository, jwtService *services.JWT
 // @Tags Authentication
 // @Accept json
 // @Produce json
-// @Param user body dto.CreateApplicantRequest true "Applicant registration data"
+// @Param user body dto.CreateUserRequest true "Applicant registration data"
 // @Success 201 {object} dto.LoginResponse
 // @Failure 400 {object} map[string]string
 // @Failure 409 {object} map[string]string
 // @Failure 500 {object} map[string]string
 // @Router /applicant/signup [post]
 func (h *UserHandler) HandleApplicantSignUp(w http.ResponseWriter, r *http.Request) {
-	var req dto.CreateApplicantRequest
+	var req dto.CreateUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		h.writeErrorResponse(w, "Invalid request body", http.StatusBadRequest)
 		return
@@ -48,9 +50,9 @@ func (h *UserHandler) HandleApplicantSignUp(w http.ResponseWriter, r *http.Reque
 
 	// Basic validation
 	if validationErrors, err := h.validateStruct(req); err != nil {
-        h.writeJSONResponse(w, validationErrors, http.StatusBadRequest)
-        return
-    }
+		h.writeJSONResponse(w, validationErrors, http.StatusBadRequest)
+		return
+	}
 
 	user, err := h.userRepo.CreateApplicant(req)
 	if err != nil {

@@ -16,6 +16,7 @@ type App struct {
 	server      *Server
 	db          *sql.DB
 	userRepo    repository.UserRepository
+	adminRepo 	repository.AdminRepository
 	jwtService  *services.JWTService
 	userHandler *handlers.UserHandler
 }
@@ -37,9 +38,10 @@ func NewApp() (*App, error) {
 
 	// Initialize repositories
 	app.userRepo = repository.NewUserRepository(db)
+	app.adminRepo = repository.NewAdminRepository(db, app.userRepo)
 
 	// Initialize handlers
-	app.userHandler = handlers.NewUserHandler(app.userRepo, app.jwtService)
+	app.userHandler = handlers.NewUserHandler(app.userRepo,app.adminRepo, app.jwtService)
 
 	app.server = NewServer(addr, routes.SetupRoutes(app.userHandler, app.jwtService))
 
