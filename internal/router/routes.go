@@ -92,7 +92,7 @@ func setupUserRoutes(router chi.Router, userHandler handlers.UserHandler, jwtSer
 	})
 
 	// Public routes (no middleware)
-	router.Get("skills", userHandler.HandleSearchSkills) // Get all skills
+	router.Get("/skills", userHandler.HandleSearchSkills) // Get all skills
 
 	// Applicant specific routes
 	setupApplicantRoutes(router, userHandler, jwtService)

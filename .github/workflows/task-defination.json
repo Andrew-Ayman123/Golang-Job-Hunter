@@ -1,0 +1,140 @@
+{
+    "taskDefinitionArn": "arn:aws:ecs:eu-north-1:339712909319:task-definition/go-job-hunter-task-def:1",
+    "containerDefinitions": [
+        {
+            "name": "golang-job-hunter-container",
+            "image": "339712909319.dkr.ecr.eu-north-1.amazonaws.com/golang-job-hunter",
+            "cpu": 0,
+            "portMappings": [
+                {
+                    "name": "golang-job-hunter-container-8080-tcp",
+                    "containerPort": 8080,
+                    "hostPort": 8080,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                }
+            ],
+            "essential": true,
+            "environment": [
+                {
+                    "name": "GOOSE_MIGRATION_DIR",
+                    "value": "./migrations"
+                },
+                {
+                    "name": "DB_PORT",
+                    "value": "5432"
+                },
+                {
+                    "name": "DB_USER",
+                    "value": "postgres"
+                },
+                {
+                    "name": "DB_NAME",
+                    "value": "go-job-hunter-db"
+                },
+                {
+                    "name": "GOOSE_DBSTRING",
+                    "value": "postgres://postgres:uFoW4oF083G6@go-job-hunter-db.czmscykkyst9.eu-north-1.rds.amazonaws.com:5432/go-job-hunter-db"
+                },
+                {
+                    "name": "GOOSE_DRIVER",
+                    "value": "postgres"
+                },
+                {
+                    "name": "DB_HOST",
+                    "value": "go-job-hunter-db.czmscykkyst9.eu-north-1.rds.amazonaws.com"
+                },
+                {
+                    "name": "DB_SSLMODE",
+                    "value": "disable"
+                },
+                {
+                    "name": "ADDR",
+                    "value": ":8080"
+                },
+                {
+                    "name": "DB_PASSWORD",
+                    "value": "uFoW4oF083G6"
+                }
+            ],
+            "environmentFiles": [],
+            "mountPoints": [],
+            "volumesFrom": [],
+            "readonlyRootFilesystem": true,
+            "ulimits": [],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/go-job-hunter-task-def",
+                    "mode": "non-blocking",
+                    "awslogs-create-group": "true",
+                    "max-buffer-size": "25m",
+                    "awslogs-region": "eu-north-1",
+                    "awslogs-stream-prefix": "ecs"
+                },
+                "secretOptions": []
+            },
+            "systemControls": []
+        }
+    ],
+    "family": "go-job-hunter-task-def",
+    "taskRoleArn": "arn:aws:iam::339712909319:role/ecsTaskExecutionRole",
+    "executionRoleArn": "arn:aws:iam::339712909319:role/ecsTaskExecutionRole",
+    "networkMode": "awsvpc",
+    "revision": 1,
+    "volumes": [],
+    "status": "ACTIVE",
+    "requiresAttributes": [
+        {
+            "name": "com.amazonaws.ecs.capability.logging-driver.awslogs"
+        },
+        {
+            "name": "ecs.capability.execution-role-awslogs"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.ecr-auth"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.19"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.17"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.28"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.task-iam-role"
+        },
+        {
+            "name": "ecs.capability.execution-role-ecr-pull"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.18"
+        },
+        {
+            "name": "ecs.capability.task-eni"
+        },
+        {
+            "name": "com.amazonaws.ecs.capability.docker-remote-api.1.29"
+        }
+    ],
+    "placementConstraints": [],
+    "compatibilities": [
+        "EC2",
+        "FARGATE"
+    ],
+    "requiresCompatibilities": [
+        "FARGATE"
+    ],
+    "cpu": "1024",
+    "memory": "3072",
+    "runtimePlatform": {
+        "cpuArchitecture": "X86_64",
+        "operatingSystemFamily": "LINUX"
+    },
+    "registeredAt": "2025-06-18T04:59:51.627Z",
+    "registeredBy": "arn:aws:iam::339712909319:root",
+    "enableFaultInjection": false,
+    "tags": []
+}

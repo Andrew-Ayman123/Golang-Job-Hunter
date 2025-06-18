@@ -10,7 +10,7 @@ import (
 )
 
 func newDatabaseConnection() (*sql.DB, error) {
-	dbHost := env.GetEnv("DB_HOST", "localhost")
+	dbHost := env.GetEnv("DB_HOST", "host.docker.internal")
 	dbPort := env.GetEnv("DB_PORT", "5432")
 	dbUser := env.GetEnv("DB_USER", "postgres")
 	dbPassword := env.GetEnv("DB_PASSWORD", "132001")

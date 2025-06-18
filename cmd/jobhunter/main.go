@@ -4,7 +4,7 @@ import (
 	"log"
 
 	"github.com/Andrew-Ayman123/Job-Hunter/internal/app"
-	"github.com/Andrew-Ayman123/Job-Hunter/utils/env"
+	// "github.com/Andrew-Ayman123/Job-Hunter/utils/env"
 )
 
 // @title Go Project API
@@ -26,7 +26,7 @@ import (
 
 func main() {
 	// Initialize environment variables
-	env.Init()
+	// env.Init()
 
 	// Create and start the application
 	application, err := app.NewApp()
