@@ -29,6 +29,7 @@ name: Deploy to Amazon ECS
 on:
   push:
     branches: [ $default-branch ]
+  workflow_dispatch:  # This enables manual triggering via the "Run workflow" button
 
 env:
   AWS_REGION: eu-north-1                   # set this to your preferred AWS region, e.g. us-west-1
